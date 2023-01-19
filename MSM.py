@@ -7,7 +7,7 @@ class MSM_R():
     def __init__(self):
         self.tau0=0.7e-11 # should be optional?
         self.Ps=0.4#*(1+0.021*(Em*1e-3-0.833)/0.4) # where the nubmbers come from?
-        self.epsabs = 1e-3
+        self.epsabs = 1e-5
 
     def tau(self,E):
         return self.tau0*np.exp(E*1e4/self.Em)
@@ -90,13 +90,11 @@ class MSM_R():
 
     def dS3(self,Em,t,*a):
         self.Em=float(Em)
-        Ps=self.Ps
         eta11=np.sin(a[14])**2*np.sin(a[15])**2*np.sin(a[16])**2
         eta12=np.cos(a[14])**2*np.sin(a[15])**2*np.sin(a[16])**2
         eta2=np.cos(a[15])**2*np.sin(a[16])**2
         Smax=a[12]
-        d33=0.37
-        return -Smax*(eta2*self.L20(t,*a)+eta12*self.L102(t,*a)+eta11*(self.L101(t,*a)+self.L110(t,*a)))+d33*1e-7*Em*1e3*(self.dP3(t,*a)-Ps)+a[13]*1e-9*Em**2
+        return -Smax*(eta2*self.L20(t,*a)+eta12*self.L102(t,*a)+eta11*(self.L101(t,*a)+self.L110(t,*a)))
 
     def tau_print(self,*a):
         eta11=np.sin(a[14])**2*np.sin(a[15])**2*np.sin(a[16])**2
