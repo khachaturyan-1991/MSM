@@ -4,11 +4,11 @@ from hyperopt import hp, tpe, fmin
 
 class FitMe():
     
-    def __init__(self, dp3, ds3, data_P, data_S):
+    def __init__(self, dp3, ds3, data_P, data_S, EmList):
         data_part=10
         self.data_P = data_P[::data_part]
         self.data_S = data_S[::data_part]
-        self.EmList = [1033, 1100, 1167, 1300]
+        self.EmList = EmList
         self.dp3 = dp3
         self.ds3 = ds3
 
