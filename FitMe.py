@@ -1,9 +1,8 @@
 import numpy as np
 from hyperopt import hp, tpe, fmin
 
-
 class FitMe():
-    
+
     def __init__(self, dp3, ds3, data_P, data_S, EmList):
         data_part=10
         self.data_P = data_P[::data_part]
@@ -11,27 +10,27 @@ class FitMe():
         self.EmList = EmList
         self.dp3 = dp3
         self.ds3 = ds3
+        self.parameters = {"e1": 1.9, "e11": 2.0, "e111": 2.2, "e12": 2.2, "e2": 2.1, "e3": 2.2, \
+             "b1": 0.2, "b11": 0.9, "b111": 1.7, "b12": 2.9, "b2": 0.9, "b3": 2.9, \
+             "Smax": 0.8, "d33": 1.6, "a1": 0.8, "a2": 1.5, "a3": 0.6}
 
     def error(self, args):
+        for i, key in enumerate(self.argsList.keys()):
+            self.parameters[key] = args[i]
         time_p = self.data_P["time"]
         time_s = self.data_S["time"]
         comulativeError = 0
         for Em in self.EmList:
             p = self.data_P["{}".format(Em)]
             s = self.data_S["{}".format(Em)]
-            comulativeError += np.mean(np.sqrt((p/1e2-self.dp3(Em,time_p,*args))**2))/(max(p)-min(p))*1e2+\
-                                np.mean(np.sqrt((s-self.ds3(Em,time_s,*args))**2))/(max(s)-min(s))
+            comulativeError += np.mean(np.sqrt((p-self.dp3(Em, time_p, self.parameters)*1e2)**2))/(max(p)-min(p))+\
+                                np.mean(np.sqrt((s-self.ds3(Em, time_s, self.parameters))**2))/(max(s)-min(s))
         return comulativeError
 
-    def fitMe(self):
-        s=np.array([1.94, 2.12, 2.19, 2.22, 2.13, 2.22, 0.22, 0.92, 1.62, 2.94, 0.94, 2.97, 0.79, 1.63, 0.73, 1.55, 0.64])
-        the_range=np.array([0.1,0.1,0.1,0.1, 0.1,0.1,  0.5,0.5,0.5,0.09, 0.5,0.09,  0.01,0.01, 0.5,0.5,0.5])
-        s1=(1-0.1*the_range)*s
-        s2=(1+0.1*the_range)*s
-        space = [hp.uniform('e1',s1[0],s2[0]),hp.uniform('e11',s1[1],s2[1]),hp.uniform('e111',s1[2],s2[2]),hp.uniform('e12',s1[3],s2[3]),
-                 hp.uniform('e2',s1[4],s2[4]),hp.uniform('e3',s1[5],s2[5]),
-                 hp.uniform('b1',s1[6],s2[6]),hp.uniform('b11',s1[7],s2[7]),hp.uniform('b111',s1[8],s2[8]),hp.uniform('b12',s1[9],s2[9]),
-                            hp.uniform('b2',s1[10],s2[10]),hp.uniform('b3',s1[11],s2[11]),
-                            hp.uniform('smax',s1[12],s2[12]),hp.uniform('d33',s1[13],s2[13]),hp.uniform('a1',s1[14],s2[14]),hp.uniform('a2',s1[15],s2[15]),hp.uniform('a3',s1[16],s2[16])]
-        b = fmin(self.error,space,algo=tpe.suggest,max_evals=40)
-        return [b["e1"],b["e11"],b["e111"],b["e12"],b["e2"],b["e3"],b["b1"],b["b11"],b["b111"],b["b12"],b["b2"],b["b3"],b["smax"],b["d33"],b["a1"],b["a2"],b["a3"]]
+    def fitMe(self, argsList, theRange=0.1, EvaluationSteps = 30):
+        self.argsList = argsList
+        space = [hp.uniform(key, (1-theRange)*argsList[key], (1+theRange)*argsList[key]) for key in argsList.keys()]
+        fitted = fmin(self.error,space,algo=tpe.suggest,max_evals=EvaluationSteps)
+        for key in fitted.keys():
+            self.parameters[key] = fitted[key]
+        return self.parameters
